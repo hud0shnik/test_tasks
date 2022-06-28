@@ -13,6 +13,9 @@ def parse_kinopoisk():
     # Список, в который будет вестись запись
     result = []
 
+    # Переменная места в рейтинге
+    place=1
+
     # Цикл обработки страниц
     for page in range(20):
 
@@ -23,7 +26,7 @@ def parse_kinopoisk():
         res = resp.text
 
         # Цикл обработки фильмов
-        for film_count in range(50):
+        for _ in range(50):
 
             film = {}
 
@@ -35,8 +38,9 @@ def parse_kinopoisk():
             left = res.find(':213})":', left)+1
             film["ticket_available"] = ((res[left+7:res.find(',', left+7)])) == 'true'
 
-            # Подсчёт и запись места в рейтинге
-            film["place"] = page*50+film_count+1
+            # Запись места в рейтинге
+            film["place"] = place
+            place+=1
 
             # Добавление фильма в список
             result.append(film)
