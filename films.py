@@ -52,3 +52,5 @@ def parse_kinopoisk():
     file = open("films.json", "w")
     file.write(json.dumps(result))
     file.close()
+
+parse_kinopoisk()
