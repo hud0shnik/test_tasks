@@ -50,6 +50,7 @@ type sendMessage struct {
 	ChatId              int        `json:"chat_id"`
 	Text                string     `json:"text"`
 	ParseMode           string     `json:"parse_mode"`
+	HasProtectedContent bool       `json:"has_protected_content"`
 	AutoDelete          autoDelete `json:"message_auto_delete_timer_changed"`
 }
 
@@ -83,6 +84,7 @@ func sendMsg(chatId int, text string) error {
 		ChatId:              chatId,
 		Text:                text,
 		ParseMode:           "HTML",
+		HasProtectedContent: true,
 		AutoDelete: autoDelete{
 			Timer: 15,
 		},
