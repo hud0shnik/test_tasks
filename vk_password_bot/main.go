@@ -118,7 +118,7 @@ func respond(update update) {
 	// Обработчик команд
 	switch request[0] {
 	case "/help", "/start":
-		sendMsg(update.Message.Chat.ChatId, "Хелпа")
+		sendMsg(update.Message.Chat.ChatId, "Привет! Вот список команд:\n /set <b>service login password</b> - установить пароль\n /get <b>service</b> - получить пароль\n /del <b>service</b> - удалить пароль\n\nУ каждого сервиса может быть только один пароль")
 	case "/set":
 		setPassword(update.Message.Chat.ChatId, request[1], request[2], request[3])
 	case "/get":
