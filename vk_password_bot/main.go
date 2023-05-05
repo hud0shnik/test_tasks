@@ -47,14 +47,14 @@ type chat struct {
 }
 
 type sendMessage struct {
-	ChatId    int    `json:"chat_id"`
-	Text      string `json:"text"`
-	ParseMode string `json:"parse_mode"`
+	ChatId              int        `json:"chat_id"`
+	Text                string     `json:"text"`
+	ParseMode           string     `json:"parse_mode"`
+	AutoDelete          autoDelete `json:"message_auto_delete_timer_changed"`
 }
 
-type sendSticker struct {
-	ChatId     int    `json:"chat_id"`
-	StickerUrl string `json:"sticker"`
+type autoDelete struct {
+	Timer int `json:"message_auto_delete_time"`
 }
 
 // Структура пароля
@@ -80,9 +80,12 @@ func sendMsg(chatId int, text string) error {
 
 	// Формирование сообщения
 	buf, err := json.Marshal(sendMessage{
-		ChatId:    chatId,
-		Text:      text,
-		ParseMode: "HTML",
+		ChatId:              chatId,
+		Text:                text,
+		ParseMode:           "HTML",
+		AutoDelete: autoDelete{
+			Timer: 15,
+		},
 	})
 	if err != nil {
 		log.Printf("in sendMsg: json.Marshal error: %s", err)
