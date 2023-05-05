@@ -21,27 +21,22 @@ import (
 // Глобальный Url бота
 var botUrl string
 
-// Структуры для работы с Telegram API
-
+// Структура респонса Telegram'а
 type telegramResponse struct {
 	Result []update `json:"result"`
 }
 
+// Структура апдейта
 type update struct {
 	UpdateId int     `json:"update_id"`
 	Message  message `json:"message"`
 }
 
+// Структура сообщения
 type message struct {
-	MessageId int     `json:"message_id"`
-	Chat      chat    `json:"chat"`
-	Text      string  `json:"text"`
-	Sticker   sticker `json:"sticker"`
-}
-
-type sticker struct {
-	FileId       string `json:"file_id"`
-	FileUniqueId string `json:"file_unique_id"`
+	MessageId int    `json:"message_id"`
+	Chat      chat   `json:"chat"`
+	Text      string `json:"text"`
 }
 
 type chat struct {
@@ -81,33 +76,6 @@ func initConfig() error {
 	viper.SetConfigName("config")
 
 	return viper.ReadInConfig()
-
-}
-
-// Функция удаления сообщения (запускать только в горутине)
-func deleteMsg(chatId, messageId int) error {
-
-	// Ожидание 15ти секунд
-	time.Sleep(time.Second * 15)
-
-	// Формирование структуры удаления
-	buf, err := json.Marshal(deleteMessage{
-		ChatId:    chatId,
-		MessageId: messageId,
-	})
-	if err != nil {
-		log.Printf("in deleteMsg: json.Marshal error: %s", err)
-		return err
-	}
-
-	// Удаление сообщения
-	_, err = http.Post(botUrl+"/deleteMessage", "application/json", bytes.NewBuffer(buf))
-	if err != nil {
-		log.Printf("in deleteMsg: http.Post error: %s", err)
-		return err
-	}
-
-	return nil
 }
 
 // Функция отправки сообщения
@@ -152,7 +120,60 @@ func sendMsg(chatId int, text string) error {
 	return nil
 }
 
-// Функция генерации и отправки ответа
+// Функция удаления сообщения (запускать только в горутине)
+func deleteMsg(chatId, messageId int) error {
+
+	// Ожидание 15ти секунд
+	time.Sleep(time.Second * 15)
+
+	// Формирование структуры удаления
+	buf, err := json.Marshal(deleteMessage{
+		ChatId:    chatId,
+		MessageId: messageId,
+	})
+	if err != nil {
+		log.Printf("in deleteMsg: json.Marshal error: %s", err)
+		return err
+	}
+
+	// Удаление сообщения
+	_, err = http.Post(botUrl+"/deleteMessage", "application/json", bytes.NewBuffer(buf))
+	if err != nil {
+		log.Printf("in deleteMsg: http.Post error: %s", err)
+		return err
+	}
+
+	return nil
+}
+
+// Функция подключения к БД
+func connectDB() (*sqlx.DB, error) {
+
+	// Инициализация переменных окружения
+	godotenv.Load()
+
+	// Подключение к БД
+	db, err := sqlx.Open("postgres",
+		fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+			os.Getenv("DB_HOST"),
+			os.Getenv("DB_PORT"),
+			os.Getenv("DB_USERNAME"),
+			os.Getenv("DB_NAME"),
+			os.Getenv("DB_PASSWORD")))
+	if err != nil {
+		return nil, fmt.Errorf("in sqlx.Open: %w", err)
+	}
+
+	// Проверка подключения
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("in db.Ping: %w", err)
+	}
+
+	return db, nil
+}
+
+// Функция генерации и отправки ответов
 func respond(update update) {
 
 	// Всё кроме сообщений бот проигнорирует
@@ -161,7 +182,7 @@ func respond(update update) {
 	}
 
 	// Разделение текста пользователя на слайс
-	request := append(strings.Split(update.Message.Text, " "), " ", " ", " ", " ")
+	request := append(strings.Split(update.Message.Text, " "), "", "", "", "")
 
 	// Обработчик команд
 	switch request[0] {
@@ -286,34 +307,6 @@ func getUpdates(offset int) ([]update, error) {
 	}
 
 	return restResponse.Result, nil
-
-}
-
-// Функция подключения к БД
-func connectDB() (*sqlx.DB, error) {
-
-	// Инициализация переменных окружения
-	godotenv.Load()
-
-	// Подключение к БД
-	db, err := sqlx.Open("postgres",
-		fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
-			os.Getenv("DB_HOST"),
-			os.Getenv("DB_PORT"),
-			os.Getenv("DB_USERNAME"),
-			os.Getenv("DB_NAME"),
-			os.Getenv("DB_PASSWORD")))
-	if err != nil {
-		return nil, fmt.Errorf("in sqlx.Open: %w", err)
-	}
-
-	// Проверка подключения
-	err = db.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("in db.Ping: %w", err)
-	}
-
-	return db, nil
 }
 
 func main() {
