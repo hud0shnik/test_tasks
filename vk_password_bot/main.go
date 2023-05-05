@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
@@ -32,9 +33,10 @@ type update struct {
 }
 
 type message struct {
-	Chat    chat    `json:"chat"`
-	Text    string  `json:"text"`
-	Sticker sticker `json:"sticker"`
+	MessageId int     `json:"message_id"`
+	Chat      chat    `json:"chat"`
+	Text      string  `json:"text"`
+	Sticker   sticker `json:"sticker"`
 }
 
 type sticker struct {
@@ -47,15 +49,21 @@ type chat struct {
 }
 
 type sendMessage struct {
-	ChatId              int        `json:"chat_id"`
-	Text                string     `json:"text"`
-	ParseMode           string     `json:"parse_mode"`
-	HasProtectedContent bool       `json:"has_protected_content"`
-	AutoDelete          autoDelete `json:"message_auto_delete_timer_changed"`
+	ChatId              int    `json:"chat_id"`
+	Text                string `json:"text"`
+	ParseMode           string `json:"parse_mode"`
+	HasProtectedContent bool   `json:"has_protected_content"`
 }
 
-type autoDelete struct {
-	Timer int `json:"message_auto_delete_time"`
+type sendMessageResponse struct {
+	Result struct {
+		MessageId int `json:"message_id"`
+	} `json:"result"`
+}
+
+type deleteMessage struct {
+	ChatId    int `json:"chat_id"`
+	MessageId int `json:"message_id"`
 }
 
 // Структура пароля
@@ -76,6 +84,32 @@ func initConfig() error {
 
 }
 
+// Функция удаления сообщения (запускать только в горутине)
+func deleteMsg(chatId, messageId int) error {
+
+	// Ожидание 15ти секунд
+	time.Sleep(time.Second * 15)
+
+	// Формирование структуры удаления
+	buf, err := json.Marshal(deleteMessage{
+		ChatId:    chatId,
+		MessageId: messageId,
+	})
+	if err != nil {
+		log.Printf("in deleteMsg: json.Marshal error: %s", err)
+		return err
+	}
+
+	// Удаление сообщения
+	_, err = http.Post(botUrl+"/deleteMessage", "application/json", bytes.NewBuffer(buf))
+	if err != nil {
+		log.Printf("in deleteMsg: http.Post error: %s", err)
+		return err
+	}
+
+	return nil
+}
+
 // Функция отправки сообщения
 func sendMsg(chatId int, text string) error {
 
@@ -85,9 +119,6 @@ func sendMsg(chatId int, text string) error {
 		Text:                text,
 		ParseMode:           "HTML",
 		HasProtectedContent: true,
-		AutoDelete: autoDelete{
-			Timer: 15,
-		},
 	})
 	if err != nil {
 		log.Printf("in sendMsg: json.Marshal error: %s", err)
@@ -95,11 +126,28 @@ func sendMsg(chatId int, text string) error {
 	}
 
 	// Отправка сообщения
-	_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
+	resp, err := http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
 	if err != nil {
 		log.Printf("in sendMsg: http.Post error: %s", err)
 		return err
 	}
+	defer resp.Body.Close()
+
+	// Получение id сообщения
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("in sendMsg: ioutil.ReadAll error: %s", err)
+		return err
+	}
+	var msg sendMessageResponse
+	err = json.Unmarshal(body, &msg)
+	if err != nil {
+		log.Printf("in sendMsg: json.Unmarshal error: %s", err)
+		return err
+	}
+
+	// Запуск таймера для удаления сообщения
+	go deleteMsg(chatId, msg.Result.MessageId)
 
 	return nil
 }
@@ -121,10 +169,13 @@ func respond(update update) {
 		sendMsg(update.Message.Chat.ChatId, "Привет! Вот список команд:\n /set <b>service login password</b> - установить пароль\n /get <b>service</b> - получить пароль\n /del <b>service</b> - удалить пароль\n\nУ каждого сервиса может быть только один пароль")
 	case "/set":
 		setPassword(update.Message.Chat.ChatId, request[1], request[2], request[3])
+		go deleteMsg(update.Message.Chat.ChatId, update.Message.MessageId)
 	case "/get":
 		getPassword(update.Message.Chat.ChatId, request[1])
+		go deleteMsg(update.Message.Chat.ChatId, update.Message.MessageId)
 	case "/del":
 		delPassword(update.Message.Chat.ChatId, request[1])
+		go deleteMsg(update.Message.Chat.ChatId, update.Message.MessageId)
 	default:
 		sendMsg(update.Message.Chat.ChatId, "Я не понимаю, воспользуйтесь командой /help")
 	}
