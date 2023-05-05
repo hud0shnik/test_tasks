@@ -184,6 +184,12 @@ func respond(update update) {
 // Функция добавления пароля
 func setPassword(chatId int, serviceName, login, password string) {
 
+	// Проверка на параметры
+	if serviceName == "" || login == "" || password == "" {
+		sendMsg(chatId, "Пожалуйста воспользуйся синтаксисом ниже:\n/set <b>service login password</b>")
+		return
+	}
+
 	// Подключение к БД
 	db, err := connectDB()
 	if err != nil {
@@ -203,6 +209,12 @@ func setPassword(chatId int, serviceName, login, password string) {
 
 // Функция получения пароля
 func getPassword(chatId int, serviceName string) {
+
+	// Проверка на параметр
+	if serviceName == "" {
+		sendMsg(chatId, "Пожалуйста воспользуйся синтаксисом ниже:\n/get <b>service</b>")
+		return
+	}
 
 	// Подключение к БД
 	db, err := connectDB()
@@ -229,6 +241,12 @@ func getPassword(chatId int, serviceName string) {
 
 // Функция удаления пароля
 func delPassword(chatId int, serviceName string) {
+
+	// Проверка на параметр
+	if serviceName == "" {
+		sendMsg(chatId, "Пожалуйста воспользуйся синтаксисом ниже:\n/del <b>service</b>")
+		return
+	}
 
 	// Подключение к БД
 	db, err := connectDB()
