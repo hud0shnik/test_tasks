@@ -39,10 +39,12 @@ type message struct {
 	Text      string `json:"text"`
 }
 
+// Структура чата
 type chat struct {
 	ChatId int `json:"id"`
 }
 
+// Структура для отправки сообщений
 type sendMessage struct {
 	ChatId              int    `json:"chat_id"`
 	Text                string `json:"text"`
@@ -50,12 +52,14 @@ type sendMessage struct {
 	HasProtectedContent bool   `json:"has_protected_content"`
 }
 
+// Структура для получения id сообщения после отправки
 type sendMessageResponse struct {
 	Result struct {
 		MessageId int `json:"message_id"`
 	} `json:"result"`
 }
 
+// Структура для удаления сообщений
 type deleteMessage struct {
 	ChatId    int `json:"chat_id"`
 	MessageId int `json:"message_id"`
@@ -178,6 +182,12 @@ func respond(update update) {
 
 	// Всё кроме сообщений бот проигнорирует
 	if update.Message.Text == "" {
+		return
+	}
+
+	// Проверка на sql инъекции
+	if strings.ContainsAny(update.Message.Text, "`'%") {
+		sendMsg(update.Message.Chat.ChatId, "Пожалуйста не используйте символы <b>'</b> и <b>%</b>")
 		return
 	}
 
