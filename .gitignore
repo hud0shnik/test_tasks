@@ -1,1 +1,4 @@
 vk_password_bot/DEV/
+vk_password_bot/configs/config.yml
+vk_password_bot/.env
+ozon_comments/.env
