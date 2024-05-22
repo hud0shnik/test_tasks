@@ -3,31 +3,32 @@
 package model
 
 type Comment struct {
-	ID        string     `json:"id"`
-	Post      string     `json:"post"`
+	ID        int        `json:"id"`
+	Post      int        `json:"post"`
 	Author    string     `json:"author"`
 	Content   string     `json:"content"`
 	CreatedAt string     `json:"createdAt"`
-	ReplyTo   *string    `json:"replyTo,omitempty"`
+	ReplyTo   *int       `json:"replyTo,omitempty"`
 	Replies   []*Comment `json:"replies,omitempty"`
 }
 
 type CommentIntput struct {
-	Post    string  `json:"post"`
-	ReplyTo *string `json:"replyTo,omitempty"`
-	Author  string  `json:"author"`
-	Content string  `json:"content"`
+	Post    int    `json:"post"`
+	ReplyTo *int   `json:"replyTo,omitempty"`
+	Author  string `json:"author"`
+	Content string `json:"content"`
 }
 
 type Mutation struct {
 }
 
 type Post struct {
-	ID        string `json:"id"`
-	Author    string `json:"author"`
-	Header    string `json:"header"`
-	Content   string `json:"content"`
-	CreatedAt string `json:"createdAt"`
+	ID              int    `json:"id"`
+	Author          string `json:"author"`
+	Header          string `json:"header"`
+	Content         string `json:"content"`
+	CommentsAllowed bool   `json:"commentsAllowed"`
+	CreatedAt       string `json:"createdAt"`
 }
 
 type PostInput struct {
@@ -38,7 +39,7 @@ type PostInput struct {
 }
 
 type PostOutput struct {
-	ID              string     `json:"id"`
+	ID              int        `json:"id"`
 	Author          string     `json:"author"`
 	Header          string     `json:"header"`
 	Content         string     `json:"content"`

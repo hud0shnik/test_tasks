@@ -5,6 +5,7 @@ type Post {
     author: String!
     header: String!
     content: String!
+    commentsAllowed: Boolean!
     createdAt: Timestamp!
 }
 
