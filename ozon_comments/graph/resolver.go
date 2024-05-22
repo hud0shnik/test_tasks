@@ -1,8 +1,7 @@
 package graph
 
 import (
-	"database/sql"
-
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
 )
@@ -13,5 +12,5 @@ import (
 
 type Resolver struct {
 	Redis   *redis.Client
-	Posgres *sql.DB
+	Posgres *sqlx.DB
 }

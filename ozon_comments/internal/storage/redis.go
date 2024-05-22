@@ -2,12 +2,9 @@ package storage
 
 import (
 	"comments/graph/model"
-	"context"
 
-	redis "github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9"
 )
-
-var ctx = context.Background()
 
 func GetRedisClient(addr, password string, db int) *redis.Client {
 
@@ -22,7 +19,7 @@ func GetRedisClient(addr, password string, db int) *redis.Client {
 
 func SavePostToRedis(db *redis.Client, post model.Post) error {
 
-	// Добавить сохранение поста в Redis
+	// Добавить сохранение в Redis
 
 	return nil
 
