@@ -6,13 +6,29 @@ package graph
 
 import (
 	"comments/graph/model"
+	"comments/internal/storage"
 	"context"
 	"fmt"
 )
 
 // CreatePost is the resolver for the CreatePost field.
 func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: CreatePost - CreatePost"))
+
+	newPost := model.Post{
+		Author:          post.Author,
+		Header:          post.Header,
+		Content:         post.Content,
+		CommentsAllowed: post.CommentsAllowed,
+	}
+
+	if r.Redis != nil {
+		storage.SavePostToRedis(r.Redis, newPost)
+	} else {
+		storage.SavePostToPostgres(r.Posgres, newPost)
+	}
+
+	return &newPost, nil
+
 }
 
 // GetAllPosts is the resolver for the GetAllPosts field.

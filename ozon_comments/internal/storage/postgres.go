@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"comments/graph/model"
 	"fmt"
 	"os"
 
@@ -28,4 +29,18 @@ func GetPostgresDB() (*sqlx.DB, error) {
 	}
 
 	return db, nil
+}
+
+// SavePostToPostgres сохраняет пост в Postgres. Поля id и created_at проставляются самим Postgres.
+func SavePostToPostgres(db *sqlx.DB, post model.Post) error {
+
+	// Вставка поста в БД
+	_, err := db.Exec("INSERT INTO post (author, header, content, comments_allowed) VALUES ($1, $2, $3, $4)",
+		post.Author, post.Header, post.Content, post.CommentsAllowed)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }

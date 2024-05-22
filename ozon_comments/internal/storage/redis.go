@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// GetRedisClient создаёт клиент для работы с Redis
 func GetRedisClient(addr, password string, db int) *redis.Client {
 
 	redisClient := redis.NewClient(&redis.Options{
