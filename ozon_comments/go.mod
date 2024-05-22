@@ -14,13 +14,16 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/go-redis/redis v6.15.9+incompatible // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.0 // indirect
 	github.com/hashicorp/go-memdb v1.3.4 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
+	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/redis/go-redis v6.15.9+incompatible // indirect
 	github.com/redis/go-redis/v9 v9.5.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
