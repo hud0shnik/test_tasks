@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 // GetPostgresDB - функция подключения к Postgres
@@ -32,16 +33,17 @@ func GetPostgresDB() (*sqlx.DB, error) {
 }
 
 // SavePostToPostgres сохраняет пост в Postgres. Поля id и created_at проставляются самим Postgres.
-func SavePostToPostgres(db *sqlx.DB, post model.Post) error {
+func SavePostToPostgres(db *sqlx.DB, post model.Post) (*model.Post, error) {
 
-	// Вставка поста в БД
-	_, err := db.Exec("INSERT INTO post (author, header, content, comments_allowed) VALUES ($1, $2, $3, $4)",
+	// Вставка поста в БД и запись айди и времени создания
+	res := db.QueryRow("INSERT INTO post (author, header, content, comments_allowed) VALUES ($1, $2, $3, $4) RETURNING id, created_at",
 		post.Author, post.Header, post.Content, post.CommentsAllowed)
+	err := res.Scan(&post.ID, &post.CreatedAt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &post, nil
 
 }
 

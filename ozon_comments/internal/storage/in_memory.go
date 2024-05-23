@@ -46,7 +46,7 @@ func NewInMemoryCommentStorage(cap int) *InMemoryCommentStorage {
 }
 
 // AddPost - метод для добавляения поста в InMemoryPostStorage
-func (s *InMemoryPostStorage) AddPost(post model.Post) (model.Post, error) {
+func (s *InMemoryPostStorage) AddPost(post model.Post) (*model.Post, error) {
 
 	// Блокируем мьютекс и дефером разлочиваем его
 	s.mu.Lock()
@@ -62,7 +62,7 @@ func (s *InMemoryPostStorage) AddPost(post model.Post) (model.Post, error) {
 	// Добавляем новый пост
 	s.posts = append(s.posts, post)
 
-	return post, nil
+	return &post, nil
 }
 
 // GetPostById - метод поиска поста по айди
@@ -107,23 +107,30 @@ func (s *InMemoryPostStorage) GetAllPosts(left, right int) ([]model.Post, error)
 }
 
 // AddComment - метод для добавляения комментария в InMemoryCommentStorage
-func (s *InMemoryCommentStorage) AddComment(comment model.Comment) (model.Comment, error) {
+func (s *InMemoryCommentStorage) AddComment(input model.CommentIntput) (*model.Comment, error) {
 
 	// Блокируем мьютекс и дефером разлочиваем его
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	newComment := model.Comment{
+		Post:    input.Post,
+		Author:  input.Author,
+		Content: input.Content,
+		ReplyTo: input.ReplyTo,
+	}
+
 	// Инкриментируем крайний айди комментария
 	s.lastID++
 
 	// Задаём для нового коментария айди и время создания
-	comment.ID = s.lastID
-	comment.CreatedAt = time.Now().String()
+	newComment.ID = s.lastID
+	newComment.CreatedAt = time.Now().String()
 
 	// Добавляем новый комментарий
-	s.comments = append(s.comments, comment)
+	s.comments = append(s.comments, newComment)
 
-	return comment, nil
+	return &newComment, nil
 
 }
 

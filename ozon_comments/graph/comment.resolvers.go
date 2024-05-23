@@ -10,7 +10,31 @@ import (
 	"fmt"
 )
 
+var MAX_CONTENT_LENGTH = 2000
+
 // CreateComment is the resolver for the CreateComment field.
 func (r *mutationResolver) CreateComment(ctx context.Context, input model.CommentIntput) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: CreateComment - CreateComment"))
+
+	// Проверка вводимых параметров
+	switch true {
+	case len(input.Content) >= MAX_CONTENT_LENGTH:
+		return nil, fmt.Errorf("too long content length")
+	case len(input.Author) == 0:
+		return nil, fmt.Errorf("no author")
+	case input.Post < 1:
+		return nil, fmt.Errorf("wrong post id")
+	default:
+	}
+
+	if r.Posgres != nil {
+		// Todo: добавить сохранение комментариев в постгрес
+		return nil, nil
+	} else {
+		result, err := r.InMemoryStorage.Comment.AddComment(input)
+		if err != nil {
+			return nil, err
+		}
+		return result, nil
+	}
+
 }

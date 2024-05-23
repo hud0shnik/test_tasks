@@ -14,7 +14,7 @@ import (
 // CreatePost is the resolver for the CreatePost field.
 func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput) (*model.Post, error) {
 
-	newPost := model.Post{
+	input := model.Post{
 		Author:          post.Author,
 		Header:          post.Header,
 		Content:         post.Content,
@@ -22,18 +22,18 @@ func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput)
 	}
 
 	if r.Posgres != nil {
-		err := storage.SavePostToPostgres(r.Posgres, newPost)
+		res, err := storage.SavePostToPostgres(r.Posgres, input)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		_, err := r.InMemoryStorage.Post.AddPost(newPost)
-		if err != nil {
-			return nil, err
-		}
+		return res, nil
 	}
 
-	return &newPost, nil
+	res, err := r.InMemoryStorage.Post.AddPost(input)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 
 }
 
@@ -59,6 +59,7 @@ func (r *queryResolver) GetAllPosts(ctx context.Context, page *int, pageSize *in
 
 	// Поиск постов
 	if r.Posgres != nil {
+		// Todo: написать функцию для постгрес
 	} else {
 		found, err = r.InMemoryStorage.Post.GetAllPosts(left, right)
 		if err != nil {
