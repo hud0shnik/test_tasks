@@ -58,6 +58,7 @@ func GetPostFromPostgresById(db *sqlx.DB, id *int) (model.Post, error) {
 		return model.Post{}, err
 	}
 
+	// Проверка на пустой результат поиска
 	if len(selected) == 0 {
 		return model.Post{}, fmt.Errorf("post not found")
 	}
@@ -85,4 +86,26 @@ func GetAllPostsFromPostgres(db *sqlx.DB, left, right int) ([]model.Post, error)
 	}
 
 	return posts, nil
+}
+
+// SaveCommentToPostgres - функция сохранения комментария в Postgres
+func SaveCommentToPostgres(db *sqlx.DB, input model.CommentIntput) (model.Comment, error) {
+
+	// Новый комментарий
+	newComent := model.Comment{
+		Post:    input.Post,
+		ReplyTo: input.ReplyTo,
+		Author:  input.Author,
+		Content: input.Content,
+	}
+
+	// Формирование и исполнение запроса к Postgres
+	row := db.QueryRow("INSERT INTO comment (post, author, content, reply_to) VALUES ($1, $2, $3, $4) RETURNING id, created_at",
+		input.Post, input.Author, input.Content, input.ReplyTo)
+	err := row.Scan(&newComent.ID, &newComent.CreatedAt)
+	if err != nil {
+		return model.Comment{}, err
+	}
+
+	return newComent, nil
 }

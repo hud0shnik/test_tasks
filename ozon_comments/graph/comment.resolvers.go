@@ -6,6 +6,7 @@ package graph
 
 import (
 	"comments/graph/model"
+	"comments/internal/storage"
 	"context"
 	"fmt"
 )
@@ -27,8 +28,11 @@ func (r *mutationResolver) CreateComment(ctx context.Context, input model.Commen
 	}
 
 	if r.Posgres != nil {
-		// Todo: добавить сохранение комментариев в постгрес
-		return nil, nil
+		resutl, err := storage.SaveCommentToPostgres(r.Posgres, input)
+		if err != nil {
+			return nil, err
+		}
+		return &resutl, nil
 	} else {
 		result, err := r.InMemoryStorage.Comment.AddComment(input)
 		if err != nil {
