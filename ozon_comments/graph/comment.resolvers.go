@@ -63,14 +63,17 @@ func (r *queryResolver) GetAllCommentsByPost(ctx context.Context, id *int, page 
 	var err error
 
 	if r.Posgres != nil {
-		found, err = storage.GetCommentsByPost(r.Posgres, *id, right, left)
+		found, err = storage.GetCommentsByPost(r.Posgres, *id, left, right)
 		if err != nil {
 			return nil, err
 		}
 		return found, err
 	} else {
-		// Todo: добавить вывод комментариев при in-memory
-		return nil, nil
+		found, err = r.InMemoryStorage.Comment.GetCommentsByPost(*id, left, right)
+		if err != nil {
+			return nil, err
+		}
+		return found, err
 	}
 }
 

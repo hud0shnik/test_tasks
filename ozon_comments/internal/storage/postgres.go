@@ -112,7 +112,7 @@ func SaveCommentToPostgres(db *sqlx.DB, input model.CommentIntput) (model.Commen
 
 // GetCommentsByPost - функция получения всех комментариев к посту.
 // Параметры left и right определяют какую часть резльтата необходимо получить (пагинация)
-func GetCommentsByPost(db *sqlx.DB, postId, right, left int) ([]*model.Comment, error) {
+func GetCommentsByPost(db *sqlx.DB, postId, left, right int) ([]*model.Comment, error) {
 
 	// Формирование запроса к БД
 	query := "SELECT id, post, author, content, created_at AS createdAt, reply_to AS replyTo FROM comment WHERE post = $1 AND reply_to IS NULL ORDER BY created_at OFFSET $2"
