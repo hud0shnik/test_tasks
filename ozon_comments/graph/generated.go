@@ -82,9 +82,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetAllCommentsByPost func(childComplexity int, id *int, page *int, pageSize *int) int
-		GetAllPosts          func(childComplexity int, page *int, pageSize *int) int
-		GetPostByID          func(childComplexity int, id *int) int
+		GetAllCommentsByPost   func(childComplexity int, id *int, page *int, pageSize *int) int
+		GetAllPosts            func(childComplexity int, page *int, pageSize *int) int
+		GetAllRepliesByComment func(childComplexity int, id *int) int
+		GetPostByID            func(childComplexity int, id *int) int
 	}
 }
 
@@ -96,6 +97,7 @@ type QueryResolver interface {
 	GetAllPosts(ctx context.Context, page *int, pageSize *int) ([]*model.Post, error)
 	GetPostByID(ctx context.Context, id *int) (*model.PostOutput, error)
 	GetAllCommentsByPost(ctx context.Context, id *int, page *int, pageSize *int) ([]*model.Comment, error)
+	GetAllRepliesByComment(ctx context.Context, id *int) ([]*model.Comment, error)
 }
 
 type executableSchema struct {
@@ -304,6 +306,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetAllPosts(childComplexity, args["page"].(*int), args["pageSize"].(*int)), true
+
+	case "Query.GetAllRepliesByComment":
+		if e.complexity.Query.GetAllRepliesByComment == nil {
+			break
+		}
+
+		args, err := ec.field_Query_GetAllRepliesByComment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetAllRepliesByComment(childComplexity, args["id"].(*int)), true
 
 	case "Query.GetPostById":
 		if e.complexity.Query.GetPostByID == nil {
@@ -528,6 +542,21 @@ func (ec *executionContext) field_Query_GetAllPosts_args(ctx context.Context, ra
 		}
 	}
 	args["pageSize"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_GetAllRepliesByComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1847,6 +1876,77 @@ func (ec *executionContext) fieldContext_Query_GetAllCommentsByPost(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_GetAllCommentsByPost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_GetAllRepliesByComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_GetAllRepliesByComment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetAllRepliesByComment(rctx, fc.Args["id"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Comment)
+	fc.Result = res
+	return ec.marshalNComment2ᚕᚖcommentsᚋgraphᚋmodelᚐCommentᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_GetAllRepliesByComment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Comment_id(ctx, field)
+			case "post":
+				return ec.fieldContext_Comment_post(ctx, field)
+			case "author":
+				return ec.fieldContext_Comment_author(ctx, field)
+			case "content":
+				return ec.fieldContext_Comment_content(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Comment_createdAt(ctx, field)
+			case "replyTo":
+				return ec.fieldContext_Comment_replyTo(ctx, field)
+			case "replies":
+				return ec.fieldContext_Comment_replies(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Comment", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_GetAllRepliesByComment_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -4181,6 +4281,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_GetAllCommentsByPost(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "GetAllRepliesByComment":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_GetAllRepliesByComment(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

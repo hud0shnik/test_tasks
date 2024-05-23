@@ -27,19 +27,43 @@ func (r *mutationResolver) CreateComment(ctx context.Context, input model.Commen
 	default:
 	}
 
+	// Проверка на наличие постгрес
 	if r.Posgres != nil {
+
+		// Проверка на запрет комментирования поста
+		post, err := storage.GetPostFromPostgresById(r.Posgres, &input.Post)
+		if err != nil {
+			return nil, err
+		}
+		if !post.CommentsAllowed {
+			return nil, fmt.Errorf("comments not allowed")
+		}
+
+		// Сохранение поста в постгрес
 		resutl, err := storage.SaveCommentToPostgres(r.Posgres, input)
 		if err != nil {
 			return nil, err
 		}
+
 		return &resutl, nil
-	} else {
-		result, err := r.InMemoryStorage.Comment.AddComment(input)
-		if err != nil {
-			return nil, err
-		}
-		return result, nil
 	}
+
+	// Проверка на запрет комментирования поста
+	post, err := r.InMemoryStorage.Post.GetPostById(input.Post)
+	if err != nil {
+		return nil, err
+	}
+	if !post.CommentsAllowed {
+		return nil, fmt.Errorf("comments not allowed")
+	}
+
+	// Сохранение поста в память
+	result, err := r.InMemoryStorage.Comment.AddComment(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // GetAllCommentsByPost is the resolver for the GetAllCommentsByPost field.
@@ -70,6 +94,27 @@ func (r *queryResolver) GetAllCommentsByPost(ctx context.Context, id *int, page 
 		return found, err
 	} else {
 		found, err = r.InMemoryStorage.Comment.GetCommentsByPost(*id, left, right)
+		if err != nil {
+			return nil, err
+		}
+		return found, err
+	}
+}
+
+// GetAllRepliesByComment is the resolver for the GetAllRepliesByComment field.
+func (r *queryResolver) GetAllRepliesByComment(ctx context.Context, id *int) ([]*model.Comment, error) {
+
+	var found []*model.Comment
+	var err error
+
+	if r.Posgres != nil {
+		found, err = storage.GetRepliesOfComment(r.Posgres, *id)
+		if err != nil {
+			return nil, err
+		}
+		return found, err
+	} else {
+		found, err = r.InMemoryStorage.Comment.GetRepliesOfComment(*id)
 		if err != nil {
 			return nil, err
 		}

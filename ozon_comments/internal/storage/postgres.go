@@ -132,3 +132,17 @@ func GetCommentsByPost(db *sqlx.DB, postId, left, right int) ([]*model.Comment, 
 
 	return comments, nil
 }
+
+// GetRepliesOfComment - функция получения всех ответов на комментарий по айди
+func GetRepliesOfComment(db *sqlx.DB, id int) ([]*model.Comment, error) {
+
+	var result []*model.Comment
+
+	// Исполнение запроса и запись результата
+	err := db.Select(&result, "SELECT id, post, author, content, created_at AS createdAt, reply_to AS replyTo FROM comment WHERE reply_to = $1", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

@@ -18,6 +18,7 @@ input CommentIntput{
 
 extend type Query{
     GetAllCommentsByPost(id: Int, page: Int, pageSize: Int): [Comment!]!
+    GetAllRepliesByComment(id: Int): [Comment!]!
 }
 
 extend type Mutation {
