@@ -53,8 +53,7 @@ func GetPostFromPostgresById(db *sqlx.DB, id *int) (model.Post, error) {
 	var selected []model.Post
 
 	// Поиск поста по айди
-	err := db.Select(&selected, fmt.Sprintf("SELECT id, author, header, content, comments_allowed AS commentsAllowed, created_at AS createdAt FROM post WHERE id=%d", *id))
-	// Todo: добавить LIMIT 1
+	err := db.Select(&selected, fmt.Sprintf("SELECT id, author, header, content, comments_allowed AS commentsAllowed, created_at AS createdAt FROM post WHERE id=%d LIMIT 1", *id))
 	if err != nil {
 		return model.Post{}, err
 	}
@@ -64,4 +63,26 @@ func GetPostFromPostgresById(db *sqlx.DB, id *int) (model.Post, error) {
 	}
 
 	return selected[0], nil
+}
+
+// GetAllPostsFromPostgres - функция получения всех постов.
+// Параметры left и right определяют какую часть резльтата необходимо получить (пагинация)
+func GetAllPostsFromPostgres(db *sqlx.DB, left, right int) ([]model.Post, error) {
+
+	// Конструирование запроса к БД
+	query := "SELECT id, author, header, content, comments_allowed AS commentsAllowed, created_at AS createdAt FROM post ORDER BY created_at OFFSET $1"
+	args := []interface{}{left}
+	if right > 0 {
+		query += " LIMIT $2"
+		args = append(args, right)
+	}
+
+	var posts []model.Post
+
+	// Исполнение запроса и запись результата
+	if err := db.Select(&posts, query, args...); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }

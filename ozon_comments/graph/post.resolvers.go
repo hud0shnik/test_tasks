@@ -14,6 +14,7 @@ import (
 // CreatePost is the resolver for the CreatePost field.
 func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput) (*model.Post, error) {
 
+	// Конвертация инпута в Post
 	input := model.Post{
 		Author:          post.Author,
 		Header:          post.Header,
@@ -21,6 +22,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput)
 		CommentsAllowed: post.CommentsAllowed,
 	}
 
+	// Сохранение в постгрес
 	if r.Posgres != nil {
 		res, err := storage.SavePostToPostgres(r.Posgres, input)
 		if err != nil {
@@ -29,6 +31,7 @@ func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput)
 		return res, nil
 	}
 
+	// Сохранение в память
 	res, err := r.InMemoryStorage.Post.AddPost(input)
 	if err != nil {
 		return nil, err
@@ -59,13 +62,15 @@ func (r *queryResolver) GetAllPosts(ctx context.Context, page *int, pageSize *in
 
 	// Поиск постов
 	if r.Posgres != nil {
-		// Todo: написать функцию для постгрес
+		found, err = storage.GetAllPostsFromPostgres(r.Posgres, left, right)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		found, err = r.InMemoryStorage.Post.GetAllPosts(left, right)
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	// Запись постов в результат
@@ -83,6 +88,7 @@ func (r *queryResolver) GetPostByID(ctx context.Context, id *int) (*model.PostOu
 
 	var found model.Post
 	var err error
+
 	if r.Posgres != nil {
 		found, err = storage.GetPostFromPostgresById(r.Posgres, id)
 		if err != nil {
