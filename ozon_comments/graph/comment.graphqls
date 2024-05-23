@@ -16,6 +16,10 @@ input CommentIntput{
     content: String!
 }
 
+extend type Query{
+    GetAllCommentsByPost(id: Int, page: Int, pageSize: Int): [Comment!]!
+}
+
 extend type Mutation {
     CreateComment(input: CommentIntput!): Comment!
 }

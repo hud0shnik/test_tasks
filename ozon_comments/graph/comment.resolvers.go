@@ -40,5 +40,43 @@ func (r *mutationResolver) CreateComment(ctx context.Context, input model.Commen
 		}
 		return result, nil
 	}
-
 }
+
+// GetAllCommentsByPost is the resolver for the GetAllCommentsByPost field.
+func (r *queryResolver) GetAllCommentsByPost(ctx context.Context, id *int, page *int, pageSize *int) ([]*model.Comment, error) {
+
+	// Проверки на ввод
+	if page != nil && *page < 0 || pageSize != nil && *pageSize < 0 {
+		return nil, fmt.Errorf("bad request")
+	}
+
+	// Вычисление левой и правой границ вывода (пагинация)
+	var left, right int
+	if page == nil || pageSize == nil {
+		left = -1
+	} else {
+		left = (*page - 1) * *pageSize
+		right = *pageSize
+	}
+
+	var found []*model.Comment
+	var err error
+
+	if r.Posgres != nil {
+		found, err = storage.GetCommentsByPost(r.Posgres, *id, right, left)
+		if err != nil {
+			return nil, err
+		}
+		return found, err
+	} else {
+		// Todo: добавить вывод комментариев при in-memory
+		return nil, nil
+	}
+}
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
