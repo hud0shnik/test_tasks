@@ -109,3 +109,26 @@ func SaveCommentToPostgres(db *sqlx.DB, input model.CommentIntput) (model.Commen
 
 	return newComent, nil
 }
+
+// GetCommentsByPost - функция получения всех комментариев к посту.
+// Параметры left и right определяют какую часть резльтата необходимо получить (пагинация)
+func GetCommentsByPost(db sqlx.DB, postId, right, left int) ([]*model.Comment, error) {
+
+	// Формирование запроса к БД
+	query := "SELECT id, post, author, content, created_at AS createdAt, reply_to AS replyTo FROM comment WHERE post = $1 AND reply_to IS NULL ORDER BY created_at OFFSET $2"
+	args := []interface{}{postId, left}
+
+	// Проверка на наличие ограничения справа
+	if right >= 0 {
+		query += " LIMIT $3"
+		args = append(args, right)
+	}
+
+	// Выполнение запроса и запись результата
+	var comments []*model.Comment
+	if err := db.Select(&comments, query, args...); err != nil {
+		return nil, err
+	}
+
+	return comments, nil
+}
