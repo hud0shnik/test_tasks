@@ -1,0 +1,55 @@
+services:
+  app:
+    # Путь до Dockerfile для сборки образа
+    build: ./
+    # Установка имени контейнера
+    container_name: ozon_comments
+    # Проброс портов в хостовую машину из переменных окружения
+    ports:
+      - ${PORT}:${PORT}
+    # Установка переменной окружения для Postgres
+    environment:
+      STORAGE: "db"
+    # Подключение к сети
+    networks:
+      - ozon_comments_network
+
+  # Сервис для постгрес
+  postgres:
+    # Образ для постгрес и название контейнера
+    image: postgres:16
+    container_name: ozon_comments_postgres
+    # Переменные окружения
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    # Проброс портов в хостовую машину из переменных окружения
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    # Привязка томов между локальным ./data и data/ в контейнере
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    # Подключение к сети с псевдонимом database
+    networks:
+      ozon_comments_network:
+        aliases:
+          - database
+
+  # Сервис для миграций
+  migrate:
+    # Образ для мигрейт и название контейнера
+    image: migrate/migrate
+    container_name: migrate
+    # Привязка томов между локальным ./migrations и /migrations внутри контейнера
+    volumes:
+      - ./migrations:/migrations
+    # Запуск миграции (поднятие БД)
+    command: ["-path", "./migrations", "-database",  "postgres://toor:admin@database:5432/postgres?sslmode=disable", "up" ]
+    # Подключение к сети
+    networks:
+      - ozon_comments_network
+
+# Определение общей сети
+networks:
+  ozon_comments_network:
