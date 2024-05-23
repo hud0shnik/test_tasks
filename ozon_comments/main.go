@@ -11,7 +11,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/jmoiron/sqlx"
-	"github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,26 +35,30 @@ func main() {
 		port = defaultPort
 	}
 
-	var redisClient *redis.Client
 	var postgresDB *sqlx.DB
+	var inMemoryStorage *storage.InMemoryStorage
 
 	// Проверка на место хранения данных
-	if os.Getenv(storage.STORAGE_FLAG) == "in-memory" {
-		log.Info("Connecting to Redis...")
-		redisClient = storage.GetRedisClient(os.Getenv("REDIS_ADDR"), os.Getenv("REDIS_PASSWORD"), 0)
-	} else {
+	if os.Getenv(storage.STORAGE_FLAG) == "db" {
 		log.Info("Connecting to Postgres...")
 		postgresDB, err = storage.GetPostgresDB()
 		if err != nil {
 			log.Fatalf("GetPostgresDB error: %v", err)
 		}
+	} else {
+		log.Info("Creating in-memory storage...")
+		inMemoryStorage = &storage.InMemoryStorage{
+			Post:    storage.NewInMemoryPostStorage(10),
+			Comment: storage.NewInMemoryCommentStorage(10),
+		}
+
 	}
 
 	// Создание сервера
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{
-			Redis:   redisClient,
-			Posgres: postgresDB,
+			Posgres:         postgresDB,
+			InMemoryStorage: inMemoryStorage,
 		}}))
 
 	// Ручки сервиса

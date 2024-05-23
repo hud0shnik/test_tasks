@@ -21,10 +21,16 @@ func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput)
 		CommentsAllowed: post.CommentsAllowed,
 	}
 
-	if r.Redis != nil {
-		storage.SavePostToRedis(r.Redis, newPost)
+	if r.Posgres != nil {
+		err := storage.SavePostToPostgres(r.Posgres, newPost)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		storage.SavePostToPostgres(r.Posgres, newPost)
+		_, err := r.InMemoryStorage.Post.AddPost(newPost)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &newPost, nil
@@ -33,12 +39,71 @@ func (r *mutationResolver) CreatePost(ctx context.Context, post model.PostInput)
 
 // GetAllPosts is the resolver for the GetAllPosts field.
 func (r *queryResolver) GetAllPosts(ctx context.Context, page *int, pageSize *int) ([]*model.Post, error) {
-	panic(fmt.Errorf("not implemented: GetAllPosts - GetAllPosts"))
+
+	// Проверки на ввод
+	if page != nil && *page < 0 || pageSize != nil && *pageSize < 0 {
+		return nil, fmt.Errorf("bad request")
+	}
+
+	// Вычисление левой и правой границ вывода (пагинация)
+	var left, right int
+	if page == nil || pageSize == nil {
+		left = -1
+	} else {
+		left = (*page - 1) * *pageSize
+		right = *pageSize
+	}
+
+	var found []model.Post
+	var err error
+
+	// Поиск постов
+	if r.Posgres != nil {
+	} else {
+		found, err = r.InMemoryStorage.Post.GetAllPosts(left, right)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	// Запись постов в результат
+	var result []*model.Post
+	for _, p := range found {
+		result = append(result, &p)
+	}
+
+	return result, nil
+
 }
 
 // GetPostByID is the resolver for the GetPostById field.
 func (r *queryResolver) GetPostByID(ctx context.Context, id *int) (*model.PostOutput, error) {
-	panic(fmt.Errorf("not implemented: GetPostByID - GetPostById"))
+
+	var found model.Post
+	var err error
+	if r.Posgres != nil {
+		found, err = storage.GetPostFromPostgresById(r.Posgres, id)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		found, err = r.InMemoryStorage.Post.GetPostById(*id)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	result := model.PostOutput{
+		ID:              *id,
+		Author:          found.Author,
+		Header:          found.Header,
+		Content:         found.Content,
+		CommentsAllowed: found.CommentsAllowed,
+		CreatedAt:       found.CreatedAt,
+	}
+
+	return &result, nil
 }
 
 // Mutation returns MutationResolver implementation.

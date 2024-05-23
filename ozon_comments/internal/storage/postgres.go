@@ -44,3 +44,22 @@ func SavePostToPostgres(db *sqlx.DB, post model.Post) error {
 	return nil
 
 }
+
+// GetPostFromPostgresById ищет пост по айди в Postgres
+func GetPostFromPostgresById(db *sqlx.DB, id *int) (model.Post, error) {
+
+	var selected []model.Post
+
+	// Поиск поста по айди
+	err := db.Select(&selected, fmt.Sprintf("SELECT id, author, header, content, comments_allowed AS commentsAllowed, created_at AS createdAt FROM post WHERE id=%d", *id))
+	// Todo: добавить LIMIT 1
+	if err != nil {
+		return model.Post{}, err
+	}
+
+	if len(selected) == 0 {
+		return model.Post{}, fmt.Errorf("post not found")
+	}
+
+	return selected[0], nil
+}
