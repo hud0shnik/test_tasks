@@ -1,5 +1,5 @@
 # Базовый образ с минимальной оболочкой alpine
-FROM golang:1.21-alpine AS builder
+FROM golang:1.22-alpine AS builder
 
 # Установка рабочего каталога
 WORKDIR /app
@@ -18,7 +18,6 @@ RUN go build -o ./bin/app cmd/main.go
 # Копирование рабочих файлов из сборщика
 FROM alpine AS worker
 COPY --from=builder /app/bin/app /
-COPY docker.env .env
 
 # Запуск приложения
 CMD ["/app"]

@@ -26,7 +26,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     # Проброс портов в хостовую машину из переменных окружения
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      - ${DB_PORT}:${DB_PORT}
     # Привязка томов между локальным ./data и data/ в контейнере
     volumes:
       - ./data:/var/lib/postgresql/data
